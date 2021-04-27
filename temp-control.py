@@ -55,16 +55,16 @@ def get_temps():
     return temps
 
 # Check temps to determine threshold range they are in
-def check_temps(temps, subject):
+def check_temps(temps, zone):
     max_state=0
     for name,temp in temps.items():
-        if temp > config["thresholds"][subject][2]:
+        if temp > config["thresholds"][zone][2]:
             print(name+" is overheating!")
             max_state=3
-        elif temp > config["thresholds"][subject][1]:
+        elif temp > config["thresholds"][zone][1]:
             print(name+" is warm")
             max_state=2 if max_state < 2 else max_state
-        elif temp > config["thresholds"][subject][0]:
+        elif temp > config["thresholds"][zone][0]:
             print(name+" is nominal")
             max_state=1 if max_state < 1 else max_state
         else:
@@ -77,14 +77,14 @@ while True:
     temps=get_temps()
 
     # Determine cooling rate for zones
-    for name,temp in temps.items():
+    for zone,temp in temps.items():
         # Get range for zone
-        temps[name]["max"]=check_temps(temp,name)
+        temps[zone]["max"]=check_temps(temp,zone)
         # Change fan temp based on threshold
-        cooling_rate[name]+=config["fan_aggression"][name][temps[name]["max"]]
+        cooling_rate[zone]+=config["fan_aggression"][zone][temps[zone]["max"]]
         # Bounds limits
-        cooling_rate[name] = cooling_rate[name] if cooling_rate[name] > 0 else 0
-        cooling_rate[name] = cooling_rate[name] if cooling_rate[name] < 100 else 100
+        cooling_rate[zone] = cooling_rate[zone] if cooling_rate[zone] > 0 else 0
+        cooling_rate[zone] = cooling_rate[zone] if cooling_rate[zone] < 100 else 100
 
     pprint.pprint(temps)
     pprint.pprint(cooling_rate)
@@ -94,8 +94,8 @@ while True:
     for i in range(0, 6):
         speed=0
         # Total speeds for each zone
-        for name,temp in temps.items():
-            speed += config["fan_influence"][name][i]*cooling_rate[name]
+        for zone,temp in temps.items():
+            speed += config["fan_influence"][zone][i]*cooling_rate[zone]
         
         # Map speed from min to 100
         speed=((100.0-config["fan_minimum"][i])/100)*(speed)+config["fan_minimum"][i]
