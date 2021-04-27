@@ -1,0 +1,10 @@
+[Unit]
+Description=Fan speed management
+
+[Service]
+Type=oneshot
+ExecStart=hddtemp -d /dev/sd*
+ExecStart=/home/akbkuku/git/temp-control/temp-control.py
+
+[Install]
+WantedBy=default.target
