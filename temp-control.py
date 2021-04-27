@@ -82,6 +82,7 @@ while True:
         cooling_rate[zone] = cooling_rate[zone] if cooling_rate[zone] < 100 else 100
 
     pprint.pprint(temps)
+    print("Zones: ", end='')
     pprint.pprint(cooling_rate)
 
     # Determine fan speeds
@@ -99,6 +100,7 @@ while True:
         # Bounds limits
         fan_speeds[i] = fan_speeds[i] if fan_speeds[i] > config["fan_minimum"][i] else config["fan_minimum"][i]
 
+    print("Fan Speeds: ", end='')
     pprint.pprint(fan_speeds)
     # Set fan speeds on Corsair Commander
     for i in range(0, 6):
