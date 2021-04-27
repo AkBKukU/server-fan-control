@@ -4,6 +4,7 @@ Description=Fan speed management
 [Service]
 Type=oneshot
 ExecStart=hddtemp -d /dev/sd*
+ExecStart=liquidctl initialize
 ExecStart=/home/akbkuku/git/temp-control/temp-control.py
 
 [Install]

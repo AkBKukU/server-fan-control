@@ -59,16 +59,11 @@ def check_temps(temps, zone):
     max_state=0
     for name,temp in temps.items():
         if temp > config["thresholds"][zone][2]:
-            print(name+" is overheating!")
             max_state=3
         elif temp > config["thresholds"][zone][1]:
-            print(name+" is warm")
             max_state=2 if max_state < 2 else max_state
         elif temp > config["thresholds"][zone][0]:
-            print(name+" is nominal")
             max_state=1 if max_state < 1 else max_state
-        else:
-            print(name+" is cool!")
     return max_state
 
 # Main cooling feedback loop
