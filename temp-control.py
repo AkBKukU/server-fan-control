@@ -6,25 +6,33 @@ import psutil
 import time
 from telnetlib import Telnet
 
-# Temp Thresholds
-# [ nominal, warm, overheat ]
+# Temp Management Configuration
+# Zones defined as dicts
 config={
+    # Thresholds [ cold, warm, overheat ]
     "thresholds": { "drives":[44,47,50], "cpus":[55, 60, 70] },
-    "fan_reliance":{ "drives":[0,0,0.6,0.6,0.6,1], "cpus":[1,1,0.4,0.4,0.4,1]},
-    "fan_minimum":[30,30,30,30,30,50],
-    "fan_aggression":{"drives":[-0.1,0,0.1,3],"cpus":[-1,0,1,5]}
+    # Max Influence on fans (ie, drives have 0% influence on CPU cooler fans)
+    "fan_influence":{ "drives":[0,0,0.6,0.6,0.6,1], "cpus":[1,1,0.4,0.4,0.4,1]},
+    # Rate fan speeds change when past thresholds
+    "fan_aggression":{"drives":[-0.1,0,0.1,3],"cpus":[-1,0,1,5]},
+    # Minimum fan speeds, dynamic values scale between these and 100
+    # (zone independant)
+    "fan_minimum":[30,30,30,30,30,50]
     }
 
+# Dynamic Cooling rates
 cooling_rate={"drives":50.0,"cpus":50.0}
 
+# Get temps for drives and CPUs
 def get_temps():
     temps={}
 
-    #result = subprocess.run(['telnet 127.0.0.1 7634'], shell=True, stdout=subprocess.PIPE)
+    # Get drive temps from `hddtemp` running as daemon over telnet
     drives_all=[]
     with Telnet('localhost', 7634) as tn:
         drives_all+=str(tn.read_all().decode("ascii", errors="ignore").strip("|") ).split("||")
 
+    # Parse `hddtemp` response into array
     drives={}
     for drive in drives_all:
         data=drive.split("|")
@@ -32,7 +40,8 @@ def get_temps():
             drives[data[0]]=int(data[2])
 
     temps["drives"] = drives
-
+    
+    # Get CPU package temps from psutil module
     cpus={}
     sensors=psutil.sensors_temperatures()
     for name, entries in sensors.items():
@@ -45,6 +54,7 @@ def get_temps():
 
     return temps
 
+# Check temps to determine threshold range they are in
 def check_temps(temps, subject):
     max_state=0
     for name,temp in temps.items():
@@ -61,27 +71,43 @@ def check_temps(temps, subject):
             print(name+" is cool!")
     return max_state
 
-count=0;
+# Main cooling feedback loop
 while True:
+    # Get current temps
     temps=get_temps()
+
+    # Determine cooling rate for zones
     for name,temp in temps.items():
+        # Get range for zone
         temps[name]["max"]=check_temps(temp,name)
+        # Change fan temp based on threshold
         cooling_rate[name]+=config["fan_aggression"][name][temps[name]["max"]]
+        # Bounds limits
         cooling_rate[name] = cooling_rate[name] if cooling_rate[name] > 0 else 0
         cooling_rate[name] = cooling_rate[name] if cooling_rate[name] < 100 else 100
 
     pprint.pprint(temps)
     pprint.pprint(cooling_rate)
+
+    # Determine fan speeds
     fan_speeds=[]
     for i in range(0, 6):
-        speed_drives = config["fan_reliance"]["drives"][i]*cooling_rate["drives"]
-        speed_cpus = config["fan_reliance"]["cpus"][i]*cooling_rate["cpus"]
-        fan_speeds.append(((100.0-config["fan_minimum"][i])/100)*(speed_drives + speed_cpus)+config["fan_minimum"][i])
-        #fan_speeds.append((100.0-config["fan_minimum"][i])*(speed_drives + speed_cpus)+config["fan_minimum"][i])
+        speed=0
+        # Total speeds for each zone
+        for name,temp in temps.items():
+            speed += config["fan_influence"][name][i]*cooling_rate[name]
+        
+        # Map speed from min to 100
+        speed=((100.0-config["fan_minimum"][i])/100)*(speed)+config["fan_minimum"][i]
+        # Save speed for fan
+        fan_speeds.append(speed)
+        # Bounds limits
         fan_speeds[i] = fan_speeds[i] if fan_speeds[i] > config["fan_minimum"][i] else config["fan_minimum"][i]
 
     pprint.pprint(fan_speeds)
+    # Set fan speeds on Corsair Commander
     for i in range(0, 6):
         subprocess.call("liquidctl set fan"+str(i+1)+" speed "+str(int(fan_speeds[i])), shell=True)
 
+    # Wait before continuing loop
     time.sleep(1)
