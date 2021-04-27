@@ -66,6 +66,12 @@ def check_temps(temps, zone):
             max_state=1 if max_state < 1 else max_state
     return max_state
 
+# Set up commands
+# Start hddtemp daemon to get HDD temps
+subprocess.call("hddtemp -d /dev/sd*", shell=True)
+# Initialize fan control
+subprocess.call("liquidctl initialize", shell=True)
+
 # Main cooling feedback loop
 while True:
     # Get current temps
