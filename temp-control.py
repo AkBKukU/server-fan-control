@@ -87,7 +87,6 @@ while True:
         cooling_rate[zone] = cooling_rate[zone] if cooling_rate[zone] > 0 else 0
         cooling_rate[zone] = cooling_rate[zone] if cooling_rate[zone] < 100 else 100
 
-    pprint.pprint(temps)
     print("Zones: ", end='')
     pprint.pprint(cooling_rate)
 
