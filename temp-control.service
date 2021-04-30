@@ -5,5 +5,8 @@ Description=Fan speed management
 Type=simple
 ExecStart=/home/akbkuku/git/temp-control/temp-control.py
 
+Restart=on-failure
+RestartSec=15s
+
 [Install]
 WantedBy=default.target
