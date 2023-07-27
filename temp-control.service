@@ -3,7 +3,7 @@ Description=Fan speed management
 
 [Service]
 Type=simple
-ExecStart=/home/akbkuku/git/temp-control/temp-control.py
+ExecStart=/home/akbkuku/git/server-fan-control/temp-control.py
 
 Restart=on-failure
 RestartSec=15s
