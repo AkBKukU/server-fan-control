@@ -5,6 +5,7 @@ import pprint
 import psutil
 import time
 from telnetlib import Telnet
+import os.path
 
 # Temp Management Configuration
 # Zones defined as dicts
@@ -12,7 +13,7 @@ config={
     # Thresholds [ cold, warm, overheat ]
     "thresholds": { "drives":[44,47,50], "cpus":[55, 60, 70] },
     # Max Influence on fans (ie, drives have 0% influence on CPU cooler fans)
-    "fan_influence":{ "drives":[0,0,0.6,0.6,0.6,1], "cpus":[1,1,0.4,0.4,0.4,1]},
+    "fan_influence":{ "drives":[0,0,0.6,0.6,0.6,1], "cpus":[1,1,0.8,0.8,0.8,1]},
     # Rate fan speeds change when past thresholds
     "fan_aggression":{"drives":[-0.1,0,0.1,3],"cpus":[-1,0,1,5]},
     # Minimum fan speeds, dynamic values scale between these and 100
@@ -100,6 +101,11 @@ while True:
         
         # Map speed from min to 100
         speed=((100.0-config["fan_minimum"][i])/100)*(speed)+config["fan_minimum"][i]
+        
+        # Max speed override
+        if os.path.isfile("/tmp/max-fans"):
+            speed=100
+
         # Save speed for fan
         fan_speeds.append(speed)
         # Bounds limits
